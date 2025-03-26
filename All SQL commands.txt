@@ -1,0 +1,66 @@
+USE test;
+SELECT COUNT(*) FROM aws_reviews;
+SELECT * FROM aws_reviews LIMIT 100;
+CREATE INDEX idx_product_title ON aws_reviews(product_title);
+CREATE INDEX idx_customer_id ON aws_reviews(customer_id);
+CREATE INDEX idx_review_date ON aws_reviews(review_date);
+CREATE INDEX idx_star_rating ON aws_reviews(star_rating);
+CREATE INDEX idx_product_category ON aws_reviews(product_category);
+CREATE FULLTEXT INDEX idx_review_body ON aws_reviews(review_body);
+
+Analytical Queries
+#Top 10 Products with the Most Reviews
+SELECT product_title, COUNT(*) AS review_count
+FROM aws_reviews
+GROUP BY product_title
+ORDER BY review_count DESC
+LIMIT 10;
+#Average Review Ratings Per Month for Each Product
+SELECT product_title, 
+       YEAR(review_date) AS review_year, 
+       MONTH(review_date) AS review_month, 
+       AVG(star_rating) AS avg_rating
+FROM aws_reviews
+GROUP BY 1,2,3
+ORDER BY review_year DESC, review_month DESC;
+#Total Number of Votes Per Product Category
+SELECT product_category, SUM(total_votes) AS total_votes
+FROM aws_reviews
+GROUP BY product_category
+ORDER BY total_votes DESC;
+#Products with the Word "Awful" Occurring Most Frequently in Reviews
+SELECT product_title, COUNT(*) AS count_awful
+FROM aws_reviews
+WHERE review_body LIKE '%awful%'
+GROUP BY product_title
+ORDER BY count_awful DESC
+LIMIT 10;
+#Products with the Word "Awesome" Occurring Most Frequently in Reviews
+SELECT product_title, COUNT(*) AS count_awesome
+FROM aws_reviews
+WHERE review_body LIKE '%awesome%'
+GROUP BY product_title
+ORDER BY count_awesome DESC
+LIMIT 10;
+#Find the Most Controversial Reviews (High Total Votes but Low Helpful Votes Percentage)
+SELECT review_id, product_title, total_votes, helpful_votes, 
+       (helpful_votes / NULLIF(total_votes, 0)) * 100 AS helpful_percent
+FROM aws_reviews
+WHERE total_votes > 10  -- Consider reviews with significant votes
+ORDER BY helpful_percent ASC, total_votes DESC
+LIMIT 10;
+#Most Commonly Reviewed Product Per Year
+SELECT product_title, YEAR(review_date) AS review_year, COUNT(*) AS review_count
+FROM aws_reviews
+GROUP BY product_title, review_year
+ORDER BY review_year DESC, review_count DESC
+LIMIT 10;
+#Find Users Who Wrote the Most Reviews
+SELECT customer_id, COUNT(*) AS review_count
+FROM aws_reviews
+GROUP BY customer_id
+ORDER BY review_count DESC
+LIMIT 10;
+
+
+
